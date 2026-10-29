@@ -1,0 +1,45 @@
+# Minerva on a server, from the published image. Settings are in .env next to
+# this file (see .env.server.example):
+#
+#   docker compose up -d                              # start
+#   docker compose pull && docker compose up -d       # update
+services:
+  minerva:
+    image: ghcr.io/akaped/minerva:latest
+    container_name: minerva
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    env_file: .env
+
+    volumes:
+      - minerva-data:/data
+
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  # Cloudflare Tunnel (optional): HTTPS through Cloudflare with no open ports.
+  # In the Zero Trust dashboard, create a tunnel (Networks → Tunnels), give it a
+  # public hostname with service http://minerva:3000, put its token in .env as
+  # CLOUDFLARE_TUNNEL_TOKEN, then uncomment these lines and run docker compose up -d.
+  #
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: minerva-tunnel
+  #   restart: unless-stopped
+  #   depends_on:
+  #     minerva:
+  #       condition: service_healthy
+  #   command: tunnel --no-autoupdate run
+  #   environment:
+  #     TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+  #   read_only: true
+  #   cap_drop: [ALL]
+  #   security_opt: [no-new-privileges:true]
+
+volumes:
+  minerva-data:
